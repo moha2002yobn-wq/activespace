@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="ActiveSpace.Reporting/ActiveSpace.Reporting.csproj" Id="490f2fe1-b9df-4b89-ab5b-ceb8a97c56b1" />
+  <Project Path="ActiveSpaceSystem/ActiveSpaceSystem.csproj" />
+</Solution>
