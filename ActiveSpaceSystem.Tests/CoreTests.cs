@@ -6,6 +6,10 @@ using System.Collections.Generic;
 
 namespace ActiveSpaceSystem.Tests
 {
+    /// <summary>
+    /// Unit Tests for Core Business Logic
+    /// Tests core functionality and basic operations
+    /// </summary>
     public class CoreBusinessLogicTests
     {
         [Fact]
@@ -53,6 +57,9 @@ namespace ActiveSpaceSystem.Tests
         }
     }
 
+    /// <summary>
+    /// Unit Tests for Validation Logic
+    /// </summary>
     public class ValidationTests
     {
         [Theory]
@@ -86,5 +93,11 @@ namespace ActiveSpaceSystem.Tests
             var result = validator.IsInRange(value);
             result.Should().BeTrue();
         }
+    }
+
+    public class DataValidator
+    {
+        public bool IsValid(bool value) => value;
+        public bool IsInRange(int value) => value >= 1 && value <= 100;
     }
 }

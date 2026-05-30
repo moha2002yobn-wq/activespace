@@ -7,6 +7,10 @@ using System.Diagnostics;
 
 namespace ActiveSpaceSystem.Tests
 {
+    /// <summary>
+    /// Unit Tests for Data Access Layer (DAL)
+    /// Tests CRUD operations and database interactions
+    /// </summary>
     public class DataAccessLayerTests
     {
         private readonly TestDataContext _context = new TestDataContext();
@@ -66,13 +70,17 @@ namespace ActiveSpaceSystem.Tests
         }
     }
 
+    /// <summary>
+    /// Unit Tests for Performance
+    /// Tests speed and resource utilization
+    /// </summary>
     public class PerformanceTests
     {
         [Fact]
         public void SimpleOperation_Should_CompleteWithinTimeLimit()
         {
             var stopwatch = Stopwatch.StartNew();
-            PerformSimpleOperation();
+            var result = 2 + 2;
             stopwatch.Stop();
             stopwatch.ElapsedMilliseconds.Should().BeLessThan(100);
         }
@@ -81,7 +89,7 @@ namespace ActiveSpaceSystem.Tests
         public void ComplexOperation_Should_CompleteWithinTimeLimit()
         {
             var stopwatch = Stopwatch.StartNew();
-            PerformComplexOperation();
+            var data = Enumerable.Range(1, 1000).Select(x => x * x).Where(x => x % 2 == 0).ToList();
             stopwatch.Stop();
             stopwatch.ElapsedMilliseconds.Should().BeLessThan(1000);
         }
@@ -91,15 +99,16 @@ namespace ActiveSpaceSystem.Tests
         {
             var tasks = new List<System.Threading.Tasks.Task>();
             for (int i = 0; i < 10; i++)
-                tasks.Add(System.Threading.Tasks.Task.Run(() => PerformSimpleOperation()));
+                tasks.Add(System.Threading.Tasks.Task.Run(() => var result = 2 + 2));
             System.Threading.Tasks.Task.WaitAll(tasks.ToArray());
             tasks.Should().AllSatisfy(t => t.IsCompleted.Should().BeTrue());
         }
-
-        private void PerformSimpleOperation() => var result = 2 + 2;
-        private void PerformComplexOperation() => var data = Enumerable.Range(1, 1000).Select(x => x * x).Where(x => x % 2 == 0).ToList();
     }
 
+    /// <summary>
+    /// Unit Tests for Security
+    /// Tests input validation and injection prevention
+    /// </summary>
     public class SecurityTests
     {
         [Theory]
@@ -125,6 +134,35 @@ namespace ActiveSpaceSystem.Tests
         }
     }
 
+    /// <summary>
+    /// Unit Tests for Integration
+    /// Tests component interactions
+    /// </summary>
+    public class IntegrationPointsTests
+    {
+        [Fact]
+        public void EventBus_Should_PublishEvents()
+        {
+            var eventBus = new EventBus();
+            var subscriber = new TestEventSubscriber();
+            eventBus.Subscribe(subscriber);
+            eventBus.Publish(new TestEvent { Message = "Test" });
+            subscriber.ReceivedEvents.Should().HaveCount(1);
+        }
+
+        [Fact]
+        public void MessageQueue_Should_ProcessMessages()
+        {
+            var queue = new MessageQueue();
+            queue.Enqueue("Message 1");
+            queue.Enqueue("Message 2");
+            var msg = queue.Dequeue();
+            msg.Should().Be("Message 1");
+            queue.Count.Should().Be(1);
+        }
+    }
+
+    // Supporting classes
     public class TestRecord
     {
         public int Id { get; set; }
@@ -137,20 +175,8 @@ namespace ActiveSpaceSystem.Tests
         public List<TestRecord> Records { get; } = new List<TestRecord>();
         public bool AddRecord(TestRecord record) { Records.Add(record); return true; }
         public TestRecord GetRecordById(int id) => Records.FirstOrDefault(r => r.Id == id);
-        public bool UpdateRecord(TestRecord record)
-        {
-            var existing = GetRecordById(record.Id);
-            if (existing == null) return false;
-            existing.Name = record.Name;
-            return true;
-        }
-        public bool DeleteRecord(int id)
-        {
-            var record = GetRecordById(id);
-            if (record == null) return false;
-            Records.Remove(record);
-            return true;
-        }
+        public bool UpdateRecord(TestRecord record) { var existing = GetRecordById(record.Id); if (existing == null) return false; existing.Name = record.Name; return true; }
+        public bool DeleteRecord(int id) { var record = GetRecordById(id); if (record == null) return false; Records.Remove(record); return true; }
         public bool BulkInsert(List<TestRecord> records) { Records.AddRange(records); return true; }
     }
 
@@ -162,5 +188,28 @@ namespace ActiveSpaceSystem.Tests
             var dangerousPatterns = new[] { "'", "<", ">", "--", ";" };
             return !dangerousPatterns.Any(pattern => input.Contains(pattern));
         }
+    }
+
+    public class EventBus
+    {
+        private List<IEventSubscriber> subscribers = new List<IEventSubscriber>();
+        public void Subscribe(IEventSubscriber subscriber) => subscribers.Add(subscriber);
+        public void Publish(TestEvent @event) { foreach (var sub in subscribers) sub.OnEventPublished(@event); }
+    }
+
+    public class TestEvent { public string Message { get; set; } }
+    public interface IEventSubscriber { void OnEventPublished(TestEvent @event); }
+    public class TestEventSubscriber : IEventSubscriber
+    {
+        public List<TestEvent> ReceivedEvents { get; } = new List<TestEvent>();
+        public void OnEventPublished(TestEvent @event) => ReceivedEvents.Add(@event);
+    }
+
+    public class MessageQueue
+    {
+        private Queue<string> queue = new Queue<string>();
+        public void Enqueue(string message) => queue.Enqueue(message);
+        public string Dequeue() => queue.Dequeue();
+        public int Count => queue.Count;
     }
 }
